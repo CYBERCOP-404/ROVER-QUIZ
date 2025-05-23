@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rovering Quiz</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #e1bee7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    #quiz-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #6200ea;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3700b3;
+    }
+    .question {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    .answers button {
+      display: block;
+      margin: 10px auto;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #eee;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+    }
+    #downloadBtn, #restartBtn {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+  <!-- Include Noto Sans Bengali font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali&display=swap" rel="stylesheet">
+</head>
+<body oncontextmenu="return false;" >
+  <div id="quiz-container">
+    <div id="start-screen">
+      <h2>আপনার নাম লিখুন</h2>
+      <input type="text" id="username" placeholder="আপনার নাম">
+      <button onclick="startQuiz()">কুইজ শুরু করুন</button>
+    </div>
+
+    <div id="quiz-screen" style="display:none;">
+      <div class="question" id="question"></div>
+      <div class="answers" id="answers"></div>
+      <div id="timer">সময় বাকি: 60 সেকেন্ড</div>
+    </div>
+
+    <div id="result-screen" style="display:none;">
+      <div id="result"></div>
+      <button id="downloadBtn" onclick="downloadPNG()">ফলাফল PNG হিসাবে ডাউনলোড করুন</button>
+      <button id="restartBtn" onclick="restartQuiz()">কুইজ পুনরায় শুরু করুন</button>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 ডেভেলপার: MD. NAHIDUL ISLAM
+  </footer>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    const allQuestions = [
+          
+      {
+        question: "ডাক্তারি গেরো সাধারণত কী কাজে ব্যবহৃত হয়?",
+        options: ["দড়ি সংযুক্ত করা", "দড়ি ছোট করা", "দড়ি কাটা", "দড়ি রঙ করা"],
+        answer: 0
+      },
+      {
+        question: "ডাক্তারি গেরোর আরেকটি নাম কী?",
+        options: ["স্কয়ার গেরো", "বর্শি গেরো", "জেলে গেরো", "রাউন্ড টার্ন"],
+        answer: 0
+      },
+      {
+        question: "ডাক্তারি গেরো কোন পরিস্থিতিতে ব্যবহার করা উচিত নয়?",
+        options: ["ভারী বোঝা তোলার সময়", "ব্যান্ডেজ বাঁধার সময়", "প্যাকেট বাঁধার সময়", "হালকা দড়ি সংযুক্ত করার সময়"],
+        answer: 0
+      },
+      {
+        question: "পাল গেরো কোন ধরনের দড়ি সংযুক্ত করতে ব্যবহৃত হয়?",
+        options: ["সমান প্রস্থের দড়ি", "ভিন্ন প্রস্থের দড়ি", "ইলাস্টিক দড়ি", "তার দড়ি"],
+        answer: 1
+      },
+      {
+        question: "পাল গেরোর আরেকটি নাম কী?",
+        options: ["উইভার্স গেরো", "বোলাইন", "ডাবল শিট বেন্ড", "জাম্পার নট"],
+        answer: 0
+      },
+      {
+        question: "জীবন রক্ষাকারী গেরো সাধারণত কী কাজে ব্যবহৃত হয়?",
+        options: ["উদ্ধার কাজ", "দড়ি কাটা", "খুঁটিতে বাঁধা", "বাঁশ সংযুক্ত করা"],
+        answer: 0
+      },
+      {
+        question: "জীবন রক্ষাকারী গেরোর আরেকটি নাম কী?",
+        options: ["বোলাইন", "রিফ নট", "ক্লোভ হিটচ", "শিট বেন্ড"],
+        answer: 0
+      },
+      {
+        question: "জীবন রক্ষাকারী গেরো কী ধরনের লুপ তৈরি করে?",
+        options: ["স্থায়ী লুপ", "চলমান লুপ", "মুক্ত লুপ", "ঘূর্ণন লুপ"],
+        answer: 0
+      },
+      {
+        question: "বর্শি গেরো সাধারণত কী কাজে ব্যবহৃত হয়?",
+        options: ["খুঁটির সঙ্গে দড়ি বাঁধা", "দড়ি সংযুক্ত করা", "পাল বাঁধা", "জাল তৈরি"],
+        answer: 0
+      },
+      {
+        question: "বর্শি গেরোর ইংরেজি নাম কী?",
+        options: ["Clove Hitch", "Reef Knot", "Sheet Bend", "Bowline"],
+        answer: 0
+      },
+      {
+        question: "তাবু গেরো সাধারণত কোথায় ব্যবহৃত হয়?",
+        options: ["ভারী বোঝা টানার জন্য", "জাল তৈরি", "পাখা ঘোরাতে", "দড়ি ছোট করতে"],
+        answer: 0
+      },
+      {
+        question: "তাবু গেরোর মূল অংশ কতটি?",
+        options: ["১টি রাউন্ড টার্ন ও ২টি হাফ হিটচ", "২টি রাউন্ড টার্ন", "১টি স্কয়ার ও ১টি হিটচ", "৩টি ক্লোভ হিটচ"],
+        answer: 0
+      },
+      {
+        question: "জেলে গেরো সাধারণত কী কাজে ব্যবহৃত হয়?",
+        options: ["জাল তৈরি ও মেরামত", "পশু বাঁধা", "তাবু খাঁটা", "পাল টানা"],
+        answer: 0
+      },
+      {
+        question: "জেলে গেরো কিসের জন্য উপযুক্ত?",
+        options: ["ছোট সুতা যুক্ত করার জন্য", "ভারী দড়ি টানার জন্য", "রবার দড়ি বাঁধার জন্য", "পাহাড়ে ওঠার জন্য"],
+        answer: 0
+      },
+      {
+        question: "জেলে গেরো সাধারণত কোন কাজে ব্যবহার হয় না?",
+        options: ["জাল মেরামত", "জাল তৈরি", "খুঁটির সাথে দড়ি বাঁধা", "সুতা সংযুক্ত করা"],
+        answer: 2
+      },
+      {
+        question: "মাছ ধরার গেরো কোনটি?",
+        options: ["জেলে গেরো", "ডাক্তারি গেরো", "তাবু গেরো", "পাল গেরো"],
+        answer: 0
+      },
+      {
+        question: "ক্লোভ হিটচ কী?",
+        options: ["একটি বাঁধার পদ্ধতি", "একটি কাটার যন্ত্র", "একটি দড়ি", "একটি রঙ"],
+        answer: 0
+      },
+      {
+        question: "কোন গেরো উদ্ধার কাজে সবচেয়ে বেশি ব্যবহার হয়?",
+        options: ["জীবন রক্ষাকারী গেরো", "তাবু গেরো", "ডাক্তারি গেরো", "পাল গেরো"],
+        answer: 0
+      },
+      {
+        question: "কোন গেরো হালকা কাজের জন্য উপযুক্ত নয়?",
+        options: ["ডাক্তারি গেরো", "তাবু গেরো", "জীবন রক্ষাকারী গেরো", "জেলে গেরো"],
+        answer: 2
+      },
+      {
+        question: "জীবন রক্ষাকারী গেরো কোথায় খারাপ পারফর্ম করে?",
+        options: ["ভারী বোঝা তোলার সময়", "উদ্ধার কাজ", "তাবু বাঁধা", "খুঁটি বাঁধা"],
+        answer: 0
+      },
+      {
+        question: "তাবু গেরোতে কয়টি অংশ থাকে?",
+        options: ["তিনটি", "একটি", "দুটি", "চারটি"],
+        answer: 0
+      },
+      {
+        question: "পাল গেরো কোন ক্ষেত্রে নিরাপদ নয়?",
+        options: ["ভারী দড়ি টানা", "হালকা দড়ি সংযুক্তি", "জাল মেরামত", "পাল বাঁধা"],
+        answer: 0
+      },
+      {
+        question: "তাবু গেরোতে কোন অংশটি প্রথমে তৈরি করা হয়?",
+        options: ["রাউন্ড টার্ন", "হাফ হিটচ", "স্কয়ার", "শিট বেন্ড"],
+        answer: 0
+      },
+      {
+        question: "ক্লোভ হিটচ সাধারণত কোথায় প্রয়োগ হয়?",
+        options: ["খুঁটির সঙ্গে দড়ি বাঁধা", "জাল মেরামত", "উদ্ধার কাজ", "সিঁড়ি বানানো"],
+        answer: 0
+      },
+      {
+        question: "রোভারিংয়ে গেরো শেখার উদ্দেশ্য কী?",
+        options: ["ব্যবহারিক দক্ষতা অর্জন", "গান গাওয়া", "নাচ শেখা", "খেলা শেখা"],
+        answer: 0
+      }
+    ];
+
+
+    let questions = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let userName = "";
+    let timer;
+    let timeLeft = 60;
+
+    function startQuiz() {
+      userName = document.getElementById('username').value.trim();
+      if (!userName) {
+        alert("অনুগ্রহ করে আপনার নাম লিখুন");
+        return;
+      }
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      // Shuffle and select 10 random questions
+      questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+      currentQuestion = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      if (currentQuestion >= questions.length) {
+        showResult();
+        return;
+      }
+      const q = questions[currentQuestion];
+      document.getElementById('question').innerText = q.question;
+      const answersDiv = document.getElementById('answers');
+      answersDiv.innerHTML = "";
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(i);
+        answersDiv.appendChild(btn);
+      });
+
+      timeLeft = 60;
+      document.getElementById('timer').innerText = `সময় বাকি: ${timeLeft} সেকেন্ড`;
+      clearInterval(timer);
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerText = `সময় বাকি: ${timeLeft} সেকেন্ড`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          currentQuestion++;
+          showQuestion();
+        }
+      }, 1000);
+    }
+
+    function checkAnswer(selected) {
+      clearInterval(timer);
+      if (selected === questions[currentQuestion].answer) {
+        score++;
+      }
+      currentQuestion++;
+      showQuestion();
+    }
+
+    function showResult() {
+      document.getElementById('quiz-screen').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'block';
+      const percentage = Math.round((score / questions.length) * 100);
+      document.getElementById('result').innerHTML = `<h2>অভিনন্দন, <span style='color:#6a1b9a;'>${userName}</span>!</h2><p>আপনি <strong>${percentage}%</strong> স্কোর করেছেন।</p>`;
+      document.getElementById('downloadBtn').style.display = 'inline-block';
+      document.getElementById('restartBtn').style.display = 'inline-block';
+    }
+
+    function downloadPNG() {
+      html2canvas(document.getElementById("result-screen")).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${userName}_result.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      // Shuffle and select 10 new random questions
+      questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+      showQuestion();
+    }
+  </script>
+</body>
+</html>
